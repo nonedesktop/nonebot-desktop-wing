@@ -2,7 +2,6 @@ from __future__ import annotations
 import asyncio
 from glob import glob
 from pathlib import Path
-import subprocess
 import sys
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -10,6 +9,7 @@ from dotenv.main import DotEnv
 
 from nonebot_desktop_wing.constants import WINDOWS
 from nonebot_desktop_wing.lazylib import nb_cli
+from nonebot_desktop_wing.molecules import perform_pip_install
 
 if TYPE_CHECKING:
     from nb_cli.config import Driver, Adapter
@@ -30,6 +30,15 @@ def distributions(*fp: str):
     if fp:
         return metadata.distributions(path=list(fp))
     return metadata.distributions()
+
+
+def getdist(root: str):
+    return (
+        distributions(
+            *(str(Path(root) / si)
+            for si in glob(".venv/**/site-packages", root_dir=root, recursive=True))
+        )
+    )
 
 
 def create(
@@ -66,9 +75,10 @@ def create(
 
     pyexec = find_python(p)
 
-    ret = subprocess.run(
-        [pyexec, "-m", "pip", "install", *(("-i", index) if index else ()), "-U", "nonebot2", *dri_real, *adp_real]
+    ret = perform_pip_install(
+        str(pyexec), "nonebot2", *dri_real, *adp_real, index=index or ""
     )
+
     if ret.returncode != 0:
         raise OSError("cannot install packages")
 

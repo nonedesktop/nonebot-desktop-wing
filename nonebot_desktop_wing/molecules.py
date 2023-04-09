@@ -83,3 +83,28 @@ def open_new_win(cwd: Path):
 
 def system_open(fp: Union[str, Path]):
     subprocess.Popen(shlex.join(("start" if WINDOWS else "xdg-open", str(fp))), shell=True)
+
+
+def perform_pip_command(pyexec: str, command: str, *args: str):
+    return subprocess.run([pyexec, "-m", "pip", command, *args])
+
+
+def perform_pip_install(pyexec: str, *packages: str, update: bool = False, index: str = ""):
+    args = (*packages,)
+    if update:
+        args += ("-U",)
+    if index:
+        args += ("-i", index)
+    return perform_pip_command(pyexec, "install", *args)
+
+
+def rrggbb_bg2fg(color: str):
+    c_int = int(color[1:], base=16)
+    # Formula for choosing color:
+    # 0.2126 × R + 0.7152 × G + 0.0722 × B > 0.5 => bright color ==> opposite dark
+    c_bgr: List[int] = []
+    for _ in range(3):
+        c_bgr.append(c_int & 0xff)
+        c_int >>= 8
+    b, g, r = (x / 255 for x in c_bgr)
+    return "#000000" if 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 else "#ffffff"
