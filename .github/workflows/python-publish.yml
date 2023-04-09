@@ -12,11 +12,7 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-  id-token: write
-  packages: write
-  pull-requests: read
+permissions: read-all|write-all
 
 jobs:
   deploy:

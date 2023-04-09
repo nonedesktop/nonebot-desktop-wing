@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-desktop-wing"
-version = "0.1.0"
+version = "0.1.1"
 description = "Wings for NoneBot desktop applications."
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
@@ -13,3 +13,10 @@ readme = "README.md"
 [project.urls]
 Homepage = "https://github.com/nonedesktop/nonebot-desktop-wing"
 Repository = "https://github.com/nonedesktop/nonebot-desktop-wing"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+nonebot-desktop-wing = ["*.pyi"]
