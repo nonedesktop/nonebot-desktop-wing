@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-desktop-wing"
-version = "0.1.4"
+version = "0.2.0"
 description = "Wings for NoneBot desktop applications."
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
