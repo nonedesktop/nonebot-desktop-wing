@@ -1,0 +1,15 @@
+[project]
+name = "nonebot-desktop-wing"
+version = "0.1.0"
+description = "Wings for NoneBot desktop applications."
+authors = [
+    {name = "HivertMoZara", email = "worldmozara@163.com"},
+]
+license = {text = "MIT"}
+dependencies = ["nb_cli~=1.0.0", "python-dotenv~=1.0.0", "httpx>=0.23"]
+requires-python = ">=3.8"
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/nonedesktop/nonebot-desktop-wing"
+Repository = "https://github.com/nonedesktop/nonebot-desktop-wing"
