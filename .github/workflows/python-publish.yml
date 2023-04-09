@@ -12,7 +12,7 @@ on:
   release:
     types: [published]
 
-permissions: read-all|write-all
+permissions: write-all
 
 jobs:
   deploy:
