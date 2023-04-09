@@ -32,7 +32,7 @@ def distributions(*fp: str):
     return metadata.distributions()
 
 
-def getdist(root: str):
+def getdist(root: Union[str, Path]):
     return (
         distributions(
             *(str(Path(root) / si)
@@ -47,7 +47,9 @@ def create(
     adapters: List[Adapter],
     dev: bool,
     usevenv: bool,
-    index: Optional[str] = None
+    index: Optional[str] = None,
+    new_win: bool = False,
+    catch_output: bool = False
 ):
     p = Path(fp)
     if p.exists():
@@ -75,12 +77,15 @@ def create(
 
     pyexec = find_python(p)
 
-    ret = perform_pip_install(
-        str(pyexec), "nonebot2", *dri_real, *adp_real, index=index or ""
+    return perform_pip_install(
+        str(pyexec),
+        "nonebot2",
+        *dri_real,
+        *adp_real,
+        index=index or "",
+        new_win=new_win,  # type: ignore
+        catch_output=catch_output
     )
-
-    if ret.returncode != 0:
-        raise OSError("cannot install packages")
 
 
 def get_builtin_plugins(pypath: str):
@@ -91,7 +96,7 @@ def find_env_file(fp: Union[str, Path]):
     return glob(".env*", root_dir=fp)
 
 
-def get_env_config(ep: Path, config: str):
+def get_env_config(ep: Union[str, Path], config: str):
     return DotEnv(ep).get(config)
 
 
@@ -111,13 +116,16 @@ def recursive_update_env_config(fp: Union[str, Path], config: str, value: str):
     pfp = Path(fp)
     cp = pfp / ".env"
     if not cp.is_file():
+        # Default profile is 'prod' if main profile does not exist.
         cp = pfp / ".env.prod"
         useenv = DotEnv(cp).dict()
     else:
+        # Use main profile.
         useenv = DotEnv(cp).dict()
         if config not in useenv:
             env = get_env_config(cp, "ENVIRONMENT")
             if env:
+                # Developer specified profile is usable.
                 cenv = DotEnv(pfp / f".env.{env}").dict()
                 if config in cenv:
                     cp = pfp / f".env.{env}"
