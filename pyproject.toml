@@ -19,4 +19,4 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
-nonebot-desktop-wing = ["*.pyi"]
+"nonebot-desktop-wing" = ["*.pyi"]
