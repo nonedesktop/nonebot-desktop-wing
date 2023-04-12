@@ -6,7 +6,9 @@ import subprocess
 from tempfile import mkstemp
 from threading import Lock
 from types import ModuleType
-from typing import List, Literal, Optional, Tuple, TypeVar, Union, overload
+from typing import (
+    Any, List, Literal, Optional, Tuple, TypeVar, Union, overload
+)
 
 from nonebot_desktop_wing.constants import LINUX_TERMINALS, WINDOWS
 
@@ -18,22 +20,36 @@ def import_with_lock(
     name: str,
     package: Optional[str] = None
 ) -> ModuleType:
+    """Like `importlib.import_module(...)`, but using a lock to avoid
+    conflicts when importing package.
+    """
     from importlib import import_module
     with _import_lock:
         return import_module(name, package)
 
 
 def list_paginate(lst: List[T], sz: int) -> List[List[T]]:
+    """
+    Cut a list to lists whose length are equal-to-or-less-than a specified
+    size.
+
+    - lst: `List[T]`    - A list to be cut.
+    - sz: `int`         - max length for cut lists.
+
+    - return: `List[List[T]]`
+    """
     return [lst[st:st + sz] for st in range(0, len(lst), sz)]
 
 
-def get_pause_cmd():
+def get_pause_cmd() -> str:
+    """Get pause command on users' platforms."""
     if WINDOWS:
         return "pause"
     return "read -n1 -p 进程已结束，按任意键关闭。"
 
 
-def get_terminal_starter():
+def get_terminal_starter() -> Tuple[str, ...]:
+    """Get args for opening a new window, purposed for executing scripts."""
     if WINDOWS:
         return ("start", "cmd.exe", "/c")
     for te in LINUX_TERMINALS:
@@ -42,7 +58,8 @@ def get_terminal_starter():
     raise FileNotFoundError("no terminal emulator found")
 
 
-def get_terminal_starter_pure():
+def get_terminal_starter_pure() -> Tuple[str, ...]:
+    """Get args for opening a new window, only for opening a new window."""
     if WINDOWS:
         return ("start", "cmd.exe")
     for te in LINUX_TERMINALS:
@@ -51,8 +68,11 @@ def get_terminal_starter_pure():
     raise FileNotFoundError("no terminal emulator found")
 
 
-def gen_run_script(cmd: str, cwd: Union[str, Path, None] = None, activate_venv: bool = False):
-    fd, fp = mkstemp(".bat" if WINDOWS else ".sh", "nbdtk-")
+def gen_run_script(
+    cmd: str, cwd: Union[str, Path, None] = None, activate_venv: bool = False
+) -> str:
+    """Generate executable scripts, for running commands in a new window."""
+    fd, fp = mkstemp(".bat" if WINDOWS else ".sh", "nbdesktop-")
     if not WINDOWS:
         os.chmod(fd, 0o755)
     with open(fd, "w") as f:
@@ -63,7 +83,9 @@ def gen_run_script(cmd: str, cwd: Union[str, Path, None] = None, activate_venv: 
             pcwd = Path(cwd)
             if activate_venv and (pcwd / ".venv").exists():
                 if WINDOWS:
-                    f.write(f"{pcwd / '.venv' / 'Scripts' / 'activate.bat'}\n")
+                    f.write(
+                        f"{pcwd / '.venv' / 'Scripts' / 'activate.bat'}\n"
+                    )
                 else:
                     f.write(f"source {pcwd / '.venv' / 'bin' / 'activate'}\n")
 
@@ -73,7 +95,10 @@ def gen_run_script(cmd: str, cwd: Union[str, Path, None] = None, activate_venv: 
     return fp
 
 
-def exec_new_win(cmd: str, cwd: Union[str, Path, None] = None, *, catch_output: bool = False):
+def exec_new_win(
+    cmd: str, cwd: Union[str, Path, None] = None, *, catch_output: bool = False
+) -> Tuple[subprocess.Popen[bytes], str]:
+    """Execute commands in a new window."""
     sname = gen_run_script(cmd, cwd)
     return subprocess.Popen(
         shlex.join((*get_terminal_starter(), sname)), shell=True,
@@ -82,7 +107,9 @@ def exec_new_win(cmd: str, cwd: Union[str, Path, None] = None, *, catch_output: 
     ), sname
 
 
-def open_new_win(cwd: Union[str, Path, None] = None, *, catch_output: bool = False):
+def open_new_win(
+    cwd: Union[str, Path, None] = None, *, catch_output: bool = False
+) -> subprocess.Popen[bytes]:
     return subprocess.Popen(
         shlex.join(get_terminal_starter_pure()), shell=True, cwd=cwd,
         stdout=subprocess.PIPE if catch_output else None,
@@ -90,7 +117,9 @@ def open_new_win(cwd: Union[str, Path, None] = None, *, catch_output: bool = Fal
     )
 
 
-def system_open(fp: Union[str, Path], *, catch_output: bool = False):
+def system_open(
+    fp: Union[str, Path], *, catch_output: bool = False
+) -> subprocess.Popen[bytes]:
     return subprocess.Popen(
         shlex.join(("start" if WINDOWS else "xdg-open", str(fp))), shell=True,
         stdout=subprocess.PIPE if catch_output else None,
@@ -117,7 +146,7 @@ def perform_pip_command(
 def perform_pip_command(
     pyexec: str, command: str, *args: str,
     new_win: bool = False, catch_output: bool = False
-):
+) -> subprocess.Popen[bytes] | Tuple[subprocess.Popen[bytes], str]:
     cmd = [pyexec, "-m", "pip", command, *args]
     if not new_win:
         return subprocess.Popen(
@@ -147,7 +176,7 @@ def perform_pip_install(
 def perform_pip_install(
     pyexec: str, *packages: str, update: bool = False, index: str = "",
     new_win: bool = False, catch_output: bool = False
-):
+) -> Any:
     args = (*packages,)
     if update:
         args += ("-U",)
@@ -160,7 +189,7 @@ def perform_pip_install(
     )
 
 
-def rrggbb_bg2fg(color: str):
+def rrggbb_bg2fg(color: str) -> Literal['#000000', '#ffffff']:
     c_int = int(color[1:], base=16)
     # Formula for choosing color:
     # 0.2126 × R + 0.7152 × G + 0.0722 × B > 0.5 => bright color ==> opposite dark

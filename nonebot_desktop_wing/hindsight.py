@@ -1,4 +1,3 @@
-from queue import Empty, Queue
 from threading import Thread
 from typing import IO, Callable, Generic, List, Optional, ParamSpec, TypeVar
 
@@ -8,14 +7,16 @@ P = ParamSpec("P")
 
 
 class BackgroundObject(Generic[P, T]):
+    """A descriptor for running functions in background."""
     def __init__(
-        self,
-        func: Callable[P, T],
-        *args: P.args,
-        **kwargs: P.kwargs
+        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
     ) -> None:
         """
-        A descriptor for running functions in background.
+        Initialize (start) a call in background.
+
+        - func: `(P...) -> T`   - A callable to be called in background.
+        - *args: `P.args`       - Positional args for the callable.
+        - **kwargs: `P.kwargs`  - Keyword args for the callable.
         """
         self._func = func
         self._thread = Thread(None, self._work, None, args, kwargs)
@@ -36,12 +37,15 @@ class BackgroundObject(Generic[P, T]):
         # )
 
     def get(self) -> T:
+        """Wait for value."""
         self._thread.join()
         return self._value
 
 
 class RealtimeIOPipe(Generic[AnyStr_T]):
-    def __init__(self, stream: IO[AnyStr_T], writer: Callable[[AnyStr_T], object]) -> None:
+    def __init__(
+        self, stream: IO[AnyStr_T], writer: Callable[[AnyStr_T], object]
+    ) -> None:
         self.stream = stream
         self.thread = Thread(target=self._pull)
         self.writer = writer
