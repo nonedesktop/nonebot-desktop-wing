@@ -52,9 +52,3 @@ Provide some import and resources with BackgroundObject.
 |recursive_find_env_config  |Search dotenv files for a configuration in a directory.|
 |recursive_update_env_config|Update a configuration in dotenv files in a directory.|
 |get_toml_config            |Get toml data manager from a directory.|
-
-### Resources
-
-|Name                |Description|
-|:-------------------|:----------|
-|load_module_data_raw|Get raw data of NoneBot packages online.|
