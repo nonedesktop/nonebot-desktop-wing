@@ -22,4 +22,3 @@ from .project import (
     recursive_update_env_config as recursive_update_env_config,
     get_toml_config as get_toml_config
 )
-from .resources import load_module_data_raw as load_module_data_raw
