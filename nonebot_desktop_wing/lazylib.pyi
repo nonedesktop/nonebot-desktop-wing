@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 from nb_cli import handlers as _handlers
 from nb_cli import config as _config
 from nb_cli.config import Driver, Plugin, Adapter
@@ -9,7 +9,7 @@ class _nb_cli:
     config = _config
 
 
-nb_cli: _nb_cli
+nb_cli: Type[_nb_cli]
 
 RawInfo = dict[
     {
@@ -34,4 +34,4 @@ class _meta:
     raw_plugins: List[RawInfo]
 
 
-meta: _meta
+meta: Type[_meta]

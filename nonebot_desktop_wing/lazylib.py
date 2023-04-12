@@ -9,16 +9,16 @@ class _nb_cli:
     config = BackgroundObject(import_with_lock, "nb_cli.config", "*")
 
 
-nb_cli = _nb_cli()
+nb_cli = _nb_cli
 
 
 class _meta:
-    drivers = BackgroundObject(asyncio.run, nb_cli.handlers.load_module_data("driver"))
-    adapters = BackgroundObject(asyncio.run, nb_cli.handlers.load_module_data("adapter"))
-    plugins = BackgroundObject(asyncio.run, nb_cli.handlers.load_module_data("plugin"))
+    drivers = BackgroundObject(asyncio.run, nb_cli().handlers.load_module_data("driver"))
+    adapters = BackgroundObject(asyncio.run, nb_cli().handlers.load_module_data("adapter"))
+    plugins = BackgroundObject(asyncio.run, nb_cli().handlers.load_module_data("plugin"))
     raw_drivers = BackgroundObject(load_module_data_raw, "drivers")
     raw_adapters = BackgroundObject(load_module_data_raw, "adapters")
     raw_plugins = BackgroundObject(load_module_data_raw, "plugins")
 
 
-meta = _meta()
+meta = _meta
