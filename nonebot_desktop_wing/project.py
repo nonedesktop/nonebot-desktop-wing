@@ -3,7 +3,7 @@ import asyncio
 from glob import glob
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union, overload
 
 from dotenv.main import DotEnv
 
@@ -13,6 +13,7 @@ from nonebot_desktop_wing.molecules import perform_pip_install
 
 if TYPE_CHECKING:
     from nb_cli.config import Driver, Adapter
+    from subprocess import Popen
 
 
 def find_python(fp: Union[str, Path]) -> Path:
@@ -39,6 +40,34 @@ def getdist(root: Union[str, Path]):
             for si in glob(".venv/**/site-packages", root_dir=root, recursive=True))
         )
     )
+
+
+@overload
+def create(
+    fp: str,
+    drivers: List[Driver],
+    adapters: List[Adapter],
+    dev: bool,
+    usevenv: bool,
+    index: Optional[str] = None,
+    new_win: Literal[False] = False,
+    catch_output: bool = False
+) -> Popen[bytes]:
+    ...
+
+
+@overload
+def create(
+    fp: str,
+    drivers: List[Driver],
+    adapters: List[Adapter],
+    dev: bool,
+    usevenv: bool,
+    index: Optional[str] = None,
+    new_win: Literal[True] = True,
+    catch_output: bool = False
+) -> Tuple[Popen[bytes], str]:
+    ...
 
 
 def create(
