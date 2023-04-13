@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Literal
 def load_module_data_raw(
     module_name: Literal["adapters", "plugins", "drivers"]
 ) -> List[Dict[str, Any]]:
+    """Get raw module data."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
     import httpx
     exceptions: List[Exception] = []

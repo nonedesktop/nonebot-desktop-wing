@@ -3,7 +3,9 @@ import asyncio
 from glob import glob
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple, Union, overload
+from typing import (
+    TYPE_CHECKING, Iterable, List, Literal, Optional, Tuple, Union, overload
+)
 
 from dotenv.main import DotEnv
 
@@ -12,32 +14,38 @@ from nonebot_desktop_wing.lazylib import nb_cli
 from nonebot_desktop_wing.molecules import perform_pip_install
 
 if TYPE_CHECKING:
-    from nb_cli.config import Driver, Adapter
+    from importlib.metadata import Distribution
+    from nb_cli.config import Driver, Adapter, ConfigManager
     from subprocess import Popen
 
 
-def find_python(fp: Union[str, Path]) -> Path:
+def find_python(fp: Union[str, Path]) -> str:
+    """Find a python executable in a directory."""
     pfp = Path(fp)
     veexec = (
         pfp / ".venv"
         / ("Scripts" if WINDOWS else "bin")
         / ("python.exe" if WINDOWS else "python")
     )
-    return veexec if veexec.exists() else Path(sys.executable)
+    return str(veexec) if veexec.exists() else sys.executable
 
 
-def distributions(*fp: str):
+def distributions(*fp: str) -> Iterable[Distribution]:
     from importlib import metadata
     if fp:
         return metadata.distributions(path=list(fp))
     return metadata.distributions()
 
 
-def getdist(root: Union[str, Path]):
+def getdist(root: Union[str, Path]) -> Iterable[Distribution]:
+    """Get packages installed in a directory."""
     return (
         distributions(
-            *(str(Path(root) / si)
-            for si in glob(".venv/**/site-packages", root_dir=root, recursive=True))
+            *(
+                str(Path(root) / si)
+                for si in
+                glob(".venv/**/site-packages", root_dir=root, recursive=True)
+            )
         )
     )
 
@@ -64,8 +72,7 @@ def create(
     dev: bool,
     usevenv: bool,
     index: Optional[str] = None,
-    new_win: Literal[True] = True,
-    catch_output: bool = False
+    new_win: Literal[True] = True
 ) -> Tuple[Popen[bytes], str]:
     ...
 
@@ -79,7 +86,26 @@ def create(
     index: Optional[str] = None,
     new_win: bool = False,
     catch_output: bool = False
-):
+) -> Union[Popen[bytes], Tuple[Popen[bytes], str]]:
+    """
+    Create a new NoneBot project.
+
+    - fp: `str`                 - path to target project (must be empty or not
+                                  exist)
+    - drivers: `List[Driver]`   - drivers to be installed.
+    - adapters: `List[Adapter]` - adapters to be installed.
+    - dev: `bool`               - whether to use a profile for developing
+                                  plugins.
+    - usevenv: `bool`           - whether to create a virtual environment.
+    - index: `Optional[str]`    - index url for downloading packages.
+    - new_win: `bool`           - whether to create a new window.
+    - catch_output: `bool`      - whether to catch output stdout and stderr.
+
+    - return:                   - the process running commands (and temp
+                                  script path if `new_win` is set `True`).
+        - `Popen[bytes] if new_win == False`
+        - `(Popen[bytes], str) if new_win == True`
+    """
     p = Path(fp)
     if p.exists():
         p.rmdir()
@@ -107,41 +133,64 @@ def create(
     pyexec = find_python(p)
 
     return perform_pip_install(
-        str(pyexec),
-        "nonebot2",
-        *dri_real,
-        *adp_real,
+        pyexec, "nonebot2", *dri_real, *adp_real,
         index=index or "",
         new_win=new_win,  # type: ignore
         catch_output=catch_output
     )
 
 
-def get_builtin_plugins(pypath: str):
-    return asyncio.run(nb_cli.handlers.list_builtin_plugins(python_path=pypath))
+def get_builtin_plugins(pypath: str) -> List[str]:
+    """Get built-in plugins, using python in an environment."""
+    return asyncio.run(
+        nb_cli.handlers.list_builtin_plugins(python_path=pypath)
+    )
 
 
-def find_env_file(fp: Union[str, Path]):
+def find_env_file(fp: Union[str, Path]) -> List[str]:
+    """Find all dotenv files in a directory."""
     return glob(".env*", root_dir=fp)
 
 
-def get_env_config(ep: Union[str, Path], config: str):
+def get_env_config(ep: Union[str, Path], config: str) -> Optional[str]:
     return DotEnv(ep).get(config)
 
 
-def recursive_find_env_config(fp: Union[str, Path], config: str):
+def recursive_find_env_config(
+    fp: Union[str, Path], config: str
+) -> Optional[str]:
+    """
+    Recursively find a config in dotenv files.
+
+    - fp: `Union[str, Path]`    - project directory.
+    - config: `str`             - config string.
+
+    - return: `Optional[str]`   - value of the config.
+    """
     pfp = Path(fp)
     cp = pfp / ".env"
     if not cp.is_file():
+        # Default profile is 'prod' if main profile does not exist.
         return get_env_config(pfp / ".env.prod", config)
+    # Use main profile.
     glb = DotEnv(cp).dict()
     if config in glb:
+        # Config in main profile.
         return glb[config]
-    env = glb.get("ENVIRONMENT", None)
+    env = glb.get("ENVIRONMENT", None)  # Get specified profile.
     return env and get_env_config(pfp / f".env.{env}", config)
 
 
-def recursive_update_env_config(fp: Union[str, Path], config: str, value: str):
+def recursive_update_env_config(
+    fp: Union[str, Path], config: str, value: str
+) -> None:
+    """
+    Recursively edit a config in dotenv files.
+
+    - fp: `Union[str, Path]`    - project directory.
+    - config: `str`             - config string.
+    - value: `str`              - new value of the config.
+    """
     pfp = Path(fp)
     cp = pfp / ".env"
     if not cp.is_file():
@@ -154,7 +203,7 @@ def recursive_update_env_config(fp: Union[str, Path], config: str, value: str):
         if config not in useenv:
             env = get_env_config(cp, "ENVIRONMENT")
             if env:
-                # Developer specified profile is usable.
+                # Specified profile is usable.
                 cenv = DotEnv(pfp / f".env.{env}").dict()
                 if config in cenv:
                     cp = pfp / f".env.{env}"
@@ -166,6 +215,7 @@ def recursive_update_env_config(fp: Union[str, Path], config: str, value: str):
         f.writelines(f"{k}={v}\n" for k, v in useenv.items() if k and v)
 
 
-def get_toml_config(basedir: Union[str, Path]):
+def get_toml_config(basedir: Union[str, Path]) -> ConfigManager:
+    """Get project TOML manager for a project."""
     basepath = Path(basedir)
-    return nb_cli.config.ConfigManager(str(find_python(basepath)), basepath / "pyproject.toml")
+    return nb_cli.config.ConfigManager(find_python(basepath), basepath / "pyproject.toml")

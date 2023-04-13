@@ -6,9 +6,8 @@ import subprocess
 from tempfile import mkstemp
 from threading import Lock
 from types import ModuleType
-from typing import (
-    Any, List, Literal, Optional, Tuple, TypeVar, Union, overload
-)
+from typing import List, Literal, Optional, Tuple, TypeVar, Union, overload
+
 
 from nonebot_desktop_wing.constants import LINUX_TERMINALS, WINDOWS
 
@@ -33,7 +32,7 @@ def list_paginate(lst: List[T], sz: int) -> List[List[T]]:
     Cut a list to lists whose length are equal-to-or-less-than a specified
     size.
 
-    - lst: `List[T]`    - A list to be cut.
+    - lst: `List[T]`    - a list to be cut.
     - sz: `int`         - max length for cut lists.
 
     - return: `List[List[T]]`
@@ -71,7 +70,16 @@ def get_terminal_starter_pure() -> Tuple[str, ...]:
 def gen_run_script(
     cmd: str, cwd: Union[str, Path, None] = None, activate_venv: bool = False
 ) -> str:
-    """Generate executable scripts, for running commands in a new window."""
+    """
+    Generate executable scripts, for running commands in a new window.
+
+    - cmd: `str`                    - commands to be executed.
+    - cwd: `Union[str, Path, None]` - the first work directory to be set.
+    - activate_venv: `bool`         - whether to attempt to find and activate
+                                      the venv in `cwd`.
+
+    - return: `str`                 - temp script path.
+    """
     fd, fp = mkstemp(".bat" if WINDOWS else ".sh", "nbdesktop-")
     if not WINDOWS:
         os.chmod(fd, 0o755)
@@ -95,10 +103,21 @@ def gen_run_script(
     return fp
 
 
-def exec_new_win(
-    cmd: str, cwd: Union[str, Path, None] = None, *, catch_output: bool = False
+def exec_nowin(
+    cmd: str, cwd: Union[str, Path, None] = None,
+    *, catch_output: bool = True
 ) -> Tuple[subprocess.Popen[bytes], str]:
-    """Execute commands in a new window."""
+    """
+    Execute commands in a subprocess.
+    
+    - cmd: `str`                    - commands to be executed.
+    - cwd: `Union[str, Path, None]` - the first work directory to be set.
+    - catch_output: `bool`          - whether to catch output stdout and
+                                      stderr.
+
+    - return: `(Popen[bytes], str)` - the process running commands and temp
+                                      script path.
+    """
     sname = gen_run_script(cmd, cwd)
     return subprocess.Popen(
         shlex.join((*get_terminal_starter(), sname)), shell=True,
@@ -107,19 +126,50 @@ def exec_new_win(
     ), sname
 
 
-def open_new_win(
-    cwd: Union[str, Path, None] = None, *, catch_output: bool = False
-) -> subprocess.Popen[bytes]:
+def exec_new_win(
+    cmd: str, cwd: Union[str, Path, None] = None
+) -> Tuple[subprocess.Popen[bytes], str]:
+    """
+    Execute commands in a new window.
+    
+    - cmd: `str`                    - commands to be executed.
+    - cwd: `Union[str, Path, None]` - the first work directory to be set.
+
+    - return: `(Popen[bytes], str)` - the process running commands and temp
+                                      script path.
+    """
+    sname = gen_run_script(cmd, cwd)
     return subprocess.Popen(
-        shlex.join(get_terminal_starter_pure()), shell=True, cwd=cwd,
-        stdout=subprocess.PIPE if catch_output else None,
-        stderr=subprocess.STDOUT if catch_output else None
+        shlex.join((*get_terminal_starter(), sname)), shell=True,
+    ), sname
+
+
+def open_new_win(
+    cwd: Union[str, Path, None] = None
+) -> subprocess.Popen[bytes]:
+    """
+    Open a new terminal window.
+
+    - cwd: `Union[str, Path, None]` - the first work directory to be set.
+
+    - return: `Popen[bytes]`        - the process running new window.
+    """
+    return subprocess.Popen(
+        shlex.join(get_terminal_starter_pure()), shell=True, cwd=cwd
     )
 
 
 def system_open(
     fp: Union[str, Path], *, catch_output: bool = False
 ) -> subprocess.Popen[bytes]:
+    """
+    Use system applications to open a file path or URI.
+
+    - fp: `Union[str, Path]`    - a file path or URI.
+    - catch_output: `bool`      - whether to catch output stdout and stderr.
+
+    - return: `Popen[bytes]`    - the process running external applications.
+    """
     return subprocess.Popen(
         shlex.join(("start" if WINDOWS else "xdg-open", str(fp))), shell=True,
         stdout=subprocess.PIPE if catch_output else None,
@@ -137,8 +187,7 @@ def perform_pip_command(
 
 @overload
 def perform_pip_command(
-    pyexec: str, command: str, *args: str,
-    new_win: Literal[True] = True, catch_output: bool = False
+    pyexec: str, command: str, *args: str, new_win: Literal[True] = True
 ) -> Tuple[subprocess.Popen[bytes], str]:
     ...
 
@@ -146,7 +195,21 @@ def perform_pip_command(
 def perform_pip_command(
     pyexec: str, command: str, *args: str,
     new_win: bool = False, catch_output: bool = False
-) -> subprocess.Popen[bytes] | Tuple[subprocess.Popen[bytes], str]:
+) -> Union[subprocess.Popen[bytes], Tuple[subprocess.Popen[bytes], str]]:
+    """
+    Run pip commands.
+
+    - pyexec: `str`         - path to python executable.
+    - command: `str`        - pip command.
+    - *args: `str`          - args after pip command.
+    - new_win: `bool`       - whether to open a new terminal window.
+    - catch_output: `bool`  - whether to catch output stdout and stderr.
+
+    - return:               - the process running commands (and temp script
+                              path if `new_win` is set `True`).
+        - `Popen[bytes] if new_win == False`
+        - `(Popen[bytes], str) if new_win == True`
+    """
     cmd = [pyexec, "-m", "pip", command, *args]
     if not new_win:
         return subprocess.Popen(
@@ -154,7 +217,7 @@ def perform_pip_command(
             stdout=subprocess.PIPE if catch_output else None,
             stderr=subprocess.STDOUT if catch_output else None
         )
-    return exec_new_win(shlex.join(cmd), catch_output=catch_output)
+    return exec_new_win(shlex.join(cmd))
 
 
 @overload
@@ -176,7 +239,21 @@ def perform_pip_install(
 def perform_pip_install(
     pyexec: str, *packages: str, update: bool = False, index: str = "",
     new_win: bool = False, catch_output: bool = False
-) -> Any:
+) -> Union[subprocess.Popen[bytes], Tuple[subprocess.Popen[bytes], str]]:
+    """
+    Run pip install.
+
+    - pyexec: `str`         - path to python executable.
+    - *packages: `str`      - packages to be installed.
+    - index: `str`          - index for downloading.
+    - new_win: `bool`       - whether to open a new terminal window.
+    - catch_output: `bool`  - whether to catch output stdout and stderr.
+
+    - return:               - the process running commands (and temp script
+                              path if `new_win` is set `True`).
+        - `Popen[bytes] if new_win == False`
+        - `(Popen[bytes], str) if new_win == True`
+    """
     args = (*packages,)
     if update:
         args += ("-U",)
@@ -190,12 +267,22 @@ def perform_pip_install(
 
 
 def rrggbb_bg2fg(color: str) -> Literal['#000000', '#ffffff']:
+    """
+    Convert hex color code background to black or white.
+
+    - color: `str`  - color code with the shape of '#rrggbb'
+
+    - return: `str` - converted color code (`'#000000'` or `'#ffffff'`)
+    """
     c_int = int(color[1:], base=16)
     # Formula for choosing color:
-    # 0.2126 × R + 0.7152 × G + 0.0722 × B > 0.5 => bright color ==> opposite dark
+    # 0.2126 × R + 0.7152 × G + 0.0722 × B > 0.5
+    #   => bright color ==> use opposite dark
     c_bgr: List[int] = []
     for _ in range(3):
         c_bgr.append(c_int & 0xff)
         c_int >>= 8
     b, g, r = (x / 255 for x in c_bgr)
-    return "#000000" if 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 else "#ffffff"
+    return (
+        "#000000" if 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 else "#ffffff"
+    )
