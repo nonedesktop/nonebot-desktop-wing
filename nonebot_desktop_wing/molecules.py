@@ -8,7 +8,6 @@ from threading import Lock
 from types import ModuleType
 from typing import List, Literal, Optional, Tuple, TypeVar, Union, overload
 
-
 from nonebot_desktop_wing.constants import LINUX_TERMINALS, WINDOWS
 
 _import_lock = Lock()

@@ -1,5 +1,5 @@
 from threading import Thread
-from typing import IO, Callable, Generic, List, Optional, ParamSpec, TypeVar
+from typing import IO, Callable, Generic, ParamSpec, TypeVar
 
 T = TypeVar("T")
 AnyStr_T = TypeVar("AnyStr_T", str, bytes)
