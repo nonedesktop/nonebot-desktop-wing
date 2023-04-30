@@ -1,12 +1,12 @@
 [project]
 name = "nonebot-desktop-wing"
-version = "0.2.2"
+version = "0.2.3"
 description = "Wings for NoneBot desktop applications."
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
 ]
 license = {text = "MIT"}
-dependencies = ["nb_cli~=1.0.0", "python-dotenv~=1.0.0", "httpx>=0.23"]
+dependencies = ["nb_cli~=1.0.0", "python-dotenv~=1.0.0", "httpx>=0.23", "typing-extensions>=4.5.0"]
 requires-python = ">=3.8"
 readme = "README.md"
 
