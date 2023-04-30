@@ -1,6 +1,5 @@
 from __future__ import annotations
 import asyncio
-from glob import glob
 from pathlib import Path
 import sys
 from typing import (
@@ -41,11 +40,7 @@ def getdist(root: Union[str, Path]) -> Iterable[Distribution]:
     """Get packages installed in a directory."""
     return (
         distributions(
-            *(
-                str(Path(root) / si)
-                for si in
-                glob(".venv/**/site-packages", root_dir=root, recursive=True)
-            )
+            *(str(si) for si in Path(root).glob(".venv/**/site-packages"))
         )
     )
 
@@ -149,7 +144,7 @@ def get_builtin_plugins(pypath: str) -> List[str]:
 
 def find_env_file(fp: Union[str, Path]) -> List[str]:
     """Find all dotenv files in a directory."""
-    return glob(".env*", root_dir=fp)
+    return [p.name for p in Path(fp).glob(".env*")]
 
 
 def get_env_config(ep: Union[str, Path], config: str) -> Optional[str]:
