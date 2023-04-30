@@ -104,6 +104,9 @@ def gen_run_script(
                 else:
                     f.write(f"source {pcwd / '.venv' / 'bin' / 'activate'}\n")
 
+            if WINDOWS:
+                # change drive first in cmd.exe
+                f.write(f"{pcwd.drive}\n")
             f.write(f"cd \"{cwd}\"\n")
         f.write(f"{cmd}\n")
         f.write(f"{get_pause_cmd()}\n")
