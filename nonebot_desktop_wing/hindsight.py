@@ -20,6 +20,8 @@ class BackgroundObject(Generic[P, T]):
         - **kwargs: `P.kwargs`  - Keyword args for the callable.
         """
         self._func = func
+        self._args = args
+        self._kwds = kwargs
         self._thread = Thread(None, self._work, None, args, kwargs)
         self._thread.start()
         # bgobject_log_func(
@@ -40,6 +42,8 @@ class BackgroundObject(Generic[P, T]):
     def get(self) -> T:
         """Wait for value."""
         self._thread.join()
+        if not hasattr(self, "_value"):
+            self._work(*self._args, **self._kwds)
         return self._value
 
 
