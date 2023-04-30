@@ -1,18 +1,25 @@
 from __future__ import annotations
 import os
 from pathlib import Path
-import shlex
 from shutil import which
 import subprocess
 from tempfile import mkstemp
 from threading import Lock
 from types import ModuleType
-from typing import List, Literal, Optional, Tuple, TypeVar, Union, overload
+from typing import (
+    Iterable, List, Literal, Optional, Tuple, TypeVar, Union, overload
+)
 
 from nonebot_desktop_wing.constants import LINUX_TERMINALS, WINDOWS
 
 _import_lock = Lock()
 T = TypeVar("T")
+
+
+def anojoin(args: Iterable[str]) -> str:
+    """Like `shlex.join`, but uses dquote (`"`) instead of squote (`'`)."""
+    dq, cdq = "\"", "\\\""
+    return " ".join([f"\"{s.replace(dq, cdq)}\"" for s in args])
 
 
 def import_with_lock(
@@ -120,7 +127,7 @@ def exec_nowin(
     """
     sname = gen_run_script(cmd, cwd)
     return subprocess.Popen(
-        shlex.join((*get_terminal_starter(), sname)), shell=True,
+        anojoin((*get_terminal_starter(), sname)), shell=True,
         stdout=subprocess.PIPE if catch_output else None,
         stderr=subprocess.STDOUT if catch_output else None
     ), sname
@@ -140,7 +147,7 @@ def exec_new_win(
     """
     sname = gen_run_script(cmd, cwd)
     return subprocess.Popen(
-        shlex.join((*get_terminal_starter(), sname)), shell=True,
+        anojoin((*get_terminal_starter(), sname)), shell=True,
     ), sname
 
 
@@ -155,7 +162,7 @@ def open_new_win(
     - return: `Popen[bytes]`        - the process running new window.
     """
     return subprocess.Popen(
-        shlex.join(get_terminal_starter_pure()), shell=True, cwd=cwd
+        anojoin(get_terminal_starter_pure()), shell=True, cwd=cwd
     )
 
 
@@ -171,7 +178,7 @@ def system_open(
     - return: `Popen[bytes]`    - the process running external applications.
     """
     return subprocess.Popen(
-        shlex.join(("start" if WINDOWS else "xdg-open", str(fp))), shell=True,
+        anojoin(("start" if WINDOWS else "xdg-open", str(fp))), shell=True,
         stdout=subprocess.PIPE if catch_output else None,
         stderr=subprocess.STDOUT if catch_output else None
     )
@@ -217,7 +224,7 @@ def perform_pip_command(
             stdout=subprocess.PIPE if catch_output else None,
             stderr=subprocess.STDOUT if catch_output else None
         )
-    return exec_new_win(shlex.join(cmd))
+    return exec_new_win(anojoin(cmd))
 
 
 @overload
