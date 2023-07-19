@@ -10,7 +10,7 @@ from dotenv.main import DotEnv
 
 from nonebot_desktop_wing.constants import WINDOWS
 from nonebot_desktop_wing.lazylib import nb_cli
-from nonebot_desktop_wing.molecules import perform_pip_install
+from nonebot_desktop_wing.utils import perform_pip_install
 
 if TYPE_CHECKING:
     from importlib.metadata import Distribution

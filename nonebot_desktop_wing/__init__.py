@@ -1,7 +1,7 @@
 from .constants import PYPI_MIRRORS as PYPI_MIRRORS
 from .hindsight import BackgroundObject as BackgroundObject
 from .lazylib import meta as meta
-from .molecules import (
+from .utils import (
     import_with_lock as import_with_lock,
     list_paginate as list_paginate,
     exec_new_win as exec_new_win,
