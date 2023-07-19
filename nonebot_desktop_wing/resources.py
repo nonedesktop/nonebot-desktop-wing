@@ -11,9 +11,11 @@ def load_module_data_raw(
     import httpx
     exceptions: List[Exception] = []
     urls = [
-        f"https://v2.nonebot.dev/{module_name}.json",
-        f"https://raw.fastgit.org/nonebot/nonebot2/master/website/static/{module_name}.json",
-        f"https://cdn.jsdelivr.net/gh/nonebot/nonebot2/website/static/{module_name}.json",
+        f"https://registry.nonebot.dev/{module_name}.json",
+        f"https://cdn.jsdelivr.net/gh/nonebot/registry@results/{module_name}.json",
+        f"https://cdn.staticaly.com/gh/nonebot/registry@results/{module_name}.json",
+        f"https://jsd.cdn.zzko.cn/gh/nonebot/registry@results/{module_name}.json",
+        f"https://ghproxy.com/https://raw.githubusercontent.com/nonebot/registry/results/{module_name}.json",
     ]
     with ThreadPoolExecutor(max_workers=5) as executor:
         tasks = [executor.submit(httpx.get, url) for url in urls]
