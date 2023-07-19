@@ -1,11 +1,6 @@
 from .constants import PYPI_MIRRORS as PYPI_MIRRORS
-from .hindsight import BackgroundObject as BackgroundObject
-from .lazylib import meta as meta
-from .molecules import (
-    import_with_lock as import_with_lock,
+from .utils import (
     list_paginate as list_paginate,
-    exec_new_win as exec_new_win,
-    open_new_win as open_new_win,
     system_open as system_open,
     perform_pip_command as perform_pip_command,
     perform_pip_install as perform_pip_install,
@@ -13,7 +8,7 @@ from .molecules import (
 )
 from .project import (
     find_python as find_python,
-    distributions as distributions,
+    _distributions as _distributions,
     getdist as getdist,
     create as create,
     get_builtin_plugins as get_builtin_plugins,
