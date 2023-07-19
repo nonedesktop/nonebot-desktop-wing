@@ -6,7 +6,13 @@ authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
 ]
 license = {text = "MIT"}
-dependencies = ["nb-cli>=1.0.0", "python-dotenv~=1.0.0", "httpx>=0.23", "typing-extensions>=4.5.0"]
+dependencies = [
+    "nb-cli>=1.2.2",
+    "pydantic>=1.10,<2",
+    "python-dotenv~=1.0.0",
+    "httpx>=0.23",
+    "typing-extensions>=4.5.0"
+]
 requires-python = ">=3.10"
 readme = "README.md"
 
