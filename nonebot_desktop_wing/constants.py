@@ -1,8 +1,7 @@
 import os
 import sys
-from typing import List, Tuple
 
-PYPI_MIRRORS: List[str] = [
+PYPI_MIRRORS: list[str] = [
     "https://pypi.org/simple",
     "https://pypi.doubanio.com/simple",
     "https://mirrors.163.com/pypi/simple",
@@ -14,7 +13,7 @@ PYPI_MIRRORS: List[str] = [
 ]
 """PyPI mirror lists, including official index, mainly for Chinese (Mainland) users."""
 
-LINUX_TERMINALS: Tuple[str, ...] = ("gnome-terminal", "konsole", "xfce4-terminal", "xterm", "st")
+LINUX_TERMINALS: tuple[str, ...] = ("gnome-terminal", "konsole", "xfce4-terminal", "xterm", "st")
 """Some terminal emulators on Linux for choosing."""
 
 WINDOWS: bool = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
