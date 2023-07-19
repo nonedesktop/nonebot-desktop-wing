@@ -1,24 +1,29 @@
-from __future__ import annotations
 import asyncio
 from pathlib import Path
 import sys
-from typing import (
-    TYPE_CHECKING, Iterable, List, Literal, Optional, Tuple, Union, overload
-)
+from typing import TYPE_CHECKING, Iterable
 
 from dotenv.main import DotEnv
 
-from nonebot_desktop_wing.constants import WINDOWS
-from nonebot_desktop_wing.lazylib import nb_cli
-from nonebot_desktop_wing.utils import perform_pip_install
+from .constants import WINDOWS
+from .models import NoneBotCommonInfo
+from .utils import perform_pip_install
 
 if TYPE_CHECKING:
+    import nb_cli
+    import nb_cli.config
+    from nb_cli.config import ConfigManager
     from importlib.metadata import Distribution
-    from nb_cli.config import Driver, Adapter, ConfigManager
     from subprocess import Popen
 
 
-def find_python(fp: Union[str, Path]) -> str:
+def setup_nbcli():
+    from importlib import import_module
+    globals()["nb_cli"] = import_module("nb_cli")
+    import_module("nb_cli.config")
+
+
+def find_python(fp: str | Path) -> str:
     """Find a python executable in a directory."""
     pfp = Path(fp)
     veexec = (
@@ -29,65 +34,38 @@ def find_python(fp: Union[str, Path]) -> str:
     return str(veexec) if veexec.exists() else sys.executable
 
 
-def distributions(*fp: str) -> Iterable[Distribution]:
+def _distributions(*fp: str) -> Iterable["Distribution"]:
     from importlib import metadata
     if fp:
         return metadata.distributions(path=list(fp))
     return metadata.distributions()
 
 
-def getdist(root: Union[str, Path]) -> Iterable[Distribution]:
+def getdist(root: str | Path) -> Iterable["Distribution"]:
     """Get packages installed in a directory."""
     return (
-        distributions(
+        _distributions(
             *(str(si) for si in Path(root).glob(".venv/**/site-packages"))
         )
     )
 
 
-@overload
 def create(
     fp: str,
-    drivers: List[Driver],
-    adapters: List[Adapter],
+    drivers: list[NoneBotCommonInfo],
+    adapters: list[NoneBotCommonInfo],
     dev: bool,
     usevenv: bool,
-    index: Optional[str] = None,
-    new_win: Literal[False] = False,
-    catch_output: bool = False
-) -> Popen[bytes]:
-    ...
-
-
-@overload
-def create(
-    fp: str,
-    drivers: List[Driver],
-    adapters: List[Adapter],
-    dev: bool,
-    usevenv: bool,
-    index: Optional[str] = None,
-    new_win: Literal[True] = True
-) -> Tuple[Popen[bytes], str]:
-    ...
-
-
-def create(
-    fp: str,
-    drivers: List[Driver],
-    adapters: List[Adapter],
-    dev: bool,
-    usevenv: bool,
-    index: Optional[str] = None,
+    index: str | None = None,
     new_win: bool = False,
     catch_output: bool = False
-) -> Union[Popen[bytes], Tuple[Popen[bytes], str]]:
+) -> Popen[bytes]:
     """
     Create a new NoneBot project.
 
     - fp: `str`                 - path to target project (must be empty or not
                                   exist)
-    - drivers: `List[Driver]`   - drivers to be installed.
+    - drivers: `list[Driver]`   - drivers to be installed.
     - adapters: `List[Adapter]` - adapters to be installed.
     - dev: `bool`               - whether to use a profile for developing
                                   plugins.
@@ -135,29 +113,29 @@ def create(
     )
 
 
-def get_builtin_plugins(pypath: str) -> List[str]:
+def get_builtin_plugins(pypath: str) -> list[str]:
     """Get built-in plugins, using python in an environment."""
     return asyncio.run(
         nb_cli.handlers.list_builtin_plugins(python_path=pypath)
     )
 
 
-def find_env_file(fp: Union[str, Path]) -> List[str]:
+def find_env_file(fp: str | Path) -> list[str]:
     """Find all dotenv files in a directory."""
     return [p.name for p in Path(fp).glob(".env*")]
 
 
-def get_env_config(ep: Union[str, Path], config: str) -> Optional[str]:
+def get_env_config(ep: str | Path, config: str) -> str | None:
     return DotEnv(ep).get(config)
 
 
 def recursive_find_env_config(
-    fp: Union[str, Path], config: str
-) -> Optional[str]:
+    fp: str | Path, config: str
+) -> str | None:
     """
     Recursively find a config in dotenv files.
 
-    - fp: `Union[str, Path]`    - project directory.
+    - fp: `str | Path`    - project directory.
     - config: `str`             - config string.
 
     - return: `Optional[str]`   - value of the config.
@@ -177,12 +155,12 @@ def recursive_find_env_config(
 
 
 def recursive_update_env_config(
-    fp: Union[str, Path], config: str, value: str
+    fp: str | Path, config: str, value: str
 ) -> None:
     """
     Recursively edit a config in dotenv files.
 
-    - fp: `Union[str, Path]`    - project directory.
+    - fp: `str | Path`    - project directory.
     - config: `str`             - config string.
     - value: `str`              - new value of the config.
     """
@@ -210,7 +188,10 @@ def recursive_update_env_config(
         f.writelines(f"{k}={v}\n" for k, v in useenv.items() if k and v)
 
 
-def get_toml_config(basedir: Union[str, Path]) -> ConfigManager:
+def get_config_manager(basedir: str | Path) -> "ConfigManager":
     """Get project TOML manager for a project."""
     basepath = Path(basedir)
-    return nb_cli.config.ConfigManager(find_python(basepath), basepath / "pyproject.toml")
+    return nb_cli.config.ConfigManager(
+        working_dir=basepath,
+        python_path=find_python(basepath)
+    )

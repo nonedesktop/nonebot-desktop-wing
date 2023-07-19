@@ -1,8 +1,6 @@
 from pathlib import Path
 import subprocess
-from typing import (
-    Iterable, Literal, TypeVar, Union
-)
+from typing import Iterable, Literal, TypeVar
 
 from .constants import WINDOWS
 
@@ -28,7 +26,7 @@ def list_paginate(lst: list[T], sz: int) -> list[list[T]]:
     return [lst[st:st + sz] for st in range(0, len(lst), sz)]
 
 
-def system_open(fp: Union[str, Path]) -> subprocess.Popen[bytes]:
+def system_open(fp: str | Path) -> subprocess.Popen[bytes]:
     """
     Use system applications to open a file path or URI.
 

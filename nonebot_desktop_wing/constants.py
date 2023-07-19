@@ -13,8 +13,5 @@ PYPI_MIRRORS: list[str] = [
 ]
 """PyPI mirror lists, including official index, mainly for Chinese (Mainland) users."""
 
-LINUX_TERMINALS: tuple[str, ...] = ("gnome-terminal", "konsole", "xfce4-terminal", "xterm", "st")
-"""Some terminal emulators on Linux for choosing."""
-
 WINDOWS: bool = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 """Windows platform identifier."""
